@@ -259,6 +259,53 @@ namespace Utility
         {
             return Post(url, data, Encoding.UTF8);
         }
+        /// <summary>
+		/// 向服务器提交Json数据，并可设置超时时间，若超时则会发生异常。此方法会抛出所有Http异常。
+		/// </summary>
+		/// <param name="url">远程访问的地址</param>
+		/// <param name="data">参数</param>
+		/// <param name="method">Http页面请求方法</param>
+		/// <param name="timeout">超时时间（以毫秒为单位），传入的值大于0时此项设置才会生效，若发生超时则抛出异常。</param>
+		/// <returns>远程页面调用结果</returns>
+		public static string PostJsonDataToServer(string url, string data, HttpWebRequestMethod method, int timeout)
+        {
+            HttpWebRequest httpWebRequest = WebRequest.Create(url) as HttpWebRequest;
+            if (timeout > 0)
+            {
+                httpWebRequest.Timeout = timeout;
+            }
+            if (method != HttpWebRequestMethod.GET)
+            {
+                if (method == HttpWebRequestMethod.POST)
+                {
+                    httpWebRequest.Method = HttpWebRequestMethod.POST.ToString();
+                    byte[] bytes = Encoding.UTF8.GetBytes(data);
+                    httpWebRequest.ContentType = "application/json;charset=utf-8";
+                    httpWebRequest.ContentLength = (long)bytes.Length;
+                    using (Stream requestStream = httpWebRequest.GetRequestStream())
+                    {
+                        requestStream.Write(bytes, 0, bytes.Length);
+                    }
+                }
+            }
+            else
+            {
+                httpWebRequest.Method = HttpWebRequestMethod.GET.ToString();
+            }
+            string result;
+            using (HttpWebResponse httpWebResponse = httpWebRequest.GetResponse() as HttpWebResponse)
+            {
+                using (Stream responseStream = httpWebResponse.GetResponseStream())
+                {
+                    using (StreamReader streamReader = new StreamReader(responseStream))
+                    {
+                        result = streamReader.ReadToEnd();
+                    }
+                }
+            }
+            return result;
+        }
+
 
         #endregion
     }
